@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link
+      href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/@mdi/font@4.x/css/materialdesignicons.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css"
+      rel="stylesheet"
+    />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui"
+    />
+  </head>
+  <body>
+    <div id="app">
+      <v-app>
+        <v-content>
+          <v-container>
+            <v-tabs background-color="blue darken-2" dark>
+              <v-tab>
+                Tasks
+              </v-tab>
+              <v-tab-item>
+                <v-text-field
+                  v-model="search.tasks"
+                  append-icon="mdi-magnify"
+                  label="Search"
+                  single-line
+                  hide-details
+                ></v-text-field>
+                <v-data-table
+                  dense
+                  hide-default-footer
+                  sort-by="due"
+                  :loading="isLoading"
+                  :headers="headers.tasks"
+                  :items="googleTasksData.tasks"
+                  :search="search.tasks"
+                >
+                  <template v-slot:item.due="{ item }">
+                    <span>{{new Date(item.due).toLocaleString()}}</span>
+                  </template>
+                  <template v-slot:item.completed="{ item }">
+                    <v-simple-checkbox
+                      v-model="item.completed"
+                      disabled
+                    ></v-simple-checkbox>
+                  </template>
+                  <template v-slot:item.deleted="{ item }">
+                    <v-simple-checkbox
+                      v-model="item.deleted"
+                      disabled
+                    ></v-simple-checkbox>
+                  </template>
+                </v-data-table>
+              </v-tab-item>
+              <v-tab>
+                Tasklists
+              </v-tab>
+              <v-tab-item>
+                <v-text-field
+                  v-model="search.taskLists"
+                  append-icon="mdi-magnify"
+                  label="Search"
+                  single-line
+                  hide-details
+                ></v-text-field>
+                <v-data-table
+                  dense
+                  hide-default-footer
+                  sort-by="title"
+                  :loading="isLoading"
+                  :headers="headers.tasklists"
+                  :items="googleTasksData.taskLists"
+                  :search="search.taskLists"
+                >
+                  <template v-slot:item.updated="{ item }">
+                    <span>{{new Date(item.updated).toLocaleString()}}</span>
+                  </template>
+                </v-data-table>
+                <template v-slot:item.updated="{ item }">
+                  <v-chip>anc</v-chip>
+                </template>
+              </v-tab-item>
+              <v-tab>
+                JSON Data
+              </v-tab>
+              <v-tab-item>
+                <v-textarea rows="15" v-model="formattedJson"></v-textarea>
+              </v-tab-item>
+            </v-tabs>
+          </v-container>
+        </v-content>
+      </v-app>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+    <script>
+      new Vue({
+        el: "#app",
+        vuetify: new Vuetify(),
+        data: () => {
+          return {
+            isLoading: true,
+            search: {
+              tasks: "",
+              taskLists: ""
+            },
+            headers: {
+              tasks: [
+                { text: "Due Date", value: "due" },
+                { text: "Title", value: "title" },
+                { text: "Description", value: "notes" },
+                { text: "Parent Tasklist", value: "taskListTitle" },
+                { text: "Completed", value: "completed" },
+                { text: "Deleted", value: "deleted" }
+              ],
+              tasklists: [
+                { text: "Last Update", value: "updated" },
+                { text: "Title", value: "title" }
+              ]
+            },
+            googleTasksData: "loading..."
+          };
+        },
+        methods: {
+          fetchData: function() {
+            google.script.run
+              .withSuccessHandler(dataFromServer => {
+                this.googleTasksData = dataFromServer;
+                this.isLoading = false;
+              })
+              .getGoogleTasksData();
+          }
+        },
+        computed: {
+          formattedJson: function() {
+            return JSON.stringify(this.googleTasksData, null, 8);
+          }
+        },
+        created() {
+          this.fetchData();
+        }
+      });
+    </script>
+  </body>
+</html>
